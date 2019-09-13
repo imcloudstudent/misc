@@ -34,7 +34,7 @@ wget -q --tries=10 --timeout=20 http://google.com
 yum update -y
 yum -y install httpd php
 chkconfig httpd on
-/etc/init.d/httpd start
+service httpd restart
 cd /var/www/html
 wget https://us-west-2-aws-training.s3.amazonaws.com/awsu-ilt/AWS-100-SYS/v2.6/lab-1-compute-linux/scripts/ec2-info.zip
 unzip ec2-info.zip
