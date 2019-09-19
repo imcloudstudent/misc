@@ -47,6 +47,9 @@ public class S3Sample {
 
             System.out.println("Uploading a new object to S3 from a file\n");
 	    // Upload the object to S3 bucket from a file created using createSampleFile method below
+	    
+	    System.out.println("Pre-signed URL for the object uploaded in the previous step");
+            // Create a pre-signed URL for 5 mins for the object uploaded in the previous step
 
             System.out.println("Downloading an object");
             // Download the previously upload object and print its content
