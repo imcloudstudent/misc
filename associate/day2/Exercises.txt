@@ -1,0 +1,26 @@
+Ex: Lock down the root user 
+	1. If necessary, create a regular user and then assign it the AdministratorAccess policy. 
+	2. Make sure there are no active access keys associated with your root account. 
+	3. Enable MFA for the root account, where short-lived authentication codes are sent to software applications on preset mobile devices (including smartphones) to confirm a user’s identity. 
+	4. Update your root login to a password that’s long, complex, and includes nonalphanu- meric characters. 
+	5. Confirm that you can still log in as root and then store the password safely.
+
+Ex: Assign and Implement an IAM policy 
+	1. Create a new user in the IAM Dashboard. 
+	2. Attach the AmazonS3FullAccess policy that will permit your user to create, edit, and delete S3 buckets. (Hint: you can search IAM policies using s3 to display a much shorter list.) 
+	3. Note the user login instructions that will be displayed. 
+	4. Log in as your new user and try creating a new S3 bucket. 
+	5. Just to prove everything is working, try launching an EC2 instance. Your request should be denied. 
+
+Ex: Create, use, and delete an AWS Access Key 
+	1. Create a new AWS access key, and save both the access key ID and secret access key somewhere secure. 
+	2. Use aws configure from your local command line to add the key to your AWS CLI configuration. 
+	If you already have a different access key configured on your system, you can create and use multiple keys in parallel. By adding the --profile argument to the aws configure command, you can create separate profiles. You’ll be prompted to enter configuration details for each new profile. Here’s an example: 
+	$ aws configure --profile account2 
+	You can then invoke a profile by adding the argument to a regular command. 
+	$ aws s3 ls ––profile account2 
+	
+	3. Try performing some operation—such as listing your S3 buckets—and then uploading a local file using the AWS CLI and your new key. 
+	4. Disable (select Make Inactive) or delete the key you just created from the IAM Dashboard. 
+	5. Confirm that you are now unable to administer your S3 buckets using the key.
+

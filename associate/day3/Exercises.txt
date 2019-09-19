@@ -1,0 +1,56 @@
+Ex 1.1: https://aws.amazon.com/getting-started/tutorials/launch-a-virtual-machine/?trk=gs_card (linux)
+Ex 1.2: https://aws.amazon.com/getting-started/tutorials/launch-windows-vm/?trk=gs_card (windows)
+
+Ex 1.3: https://aws.amazon.com/getting-started/tutorials/launch-a-wordpress-website/?trk=gs_card
+
+Ex 1.4: Launch an EC2 linux instance and log in using SSH
+	1. From the EC2 Dashboard, click to launch a new instance and select a Linux AMI and instance type. Remember, the t2.micro is Free Tier–eligible if your AWS account is still within its first year. 
+	2. Explore the Configure Instance Details, Add Storage, and Add Tags pages—although the default settings should work fine. 
+	3. On the Configure Security Group page, make sure there’s a rule permitting incoming SSH (port 22) traffic. It should be there by default. 
+	4. Before letting you launch the instance, AWS will require you to select—or create—a key pair. Follow the instructions. 
+	5. Once the instance is launched, you can return to the Instances Dashboard to wait until everything is running properly. 
+	6. Click the Actions pull-down and then the Connect item for instructions on how to connect to the instance from your local machine. Then connect and take a look at your virtual cloud server. 
+
+Connect Using Putty
+https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/putty.html
+
+Connect Using SSH
+https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstancesLinux.html
+
+
+Ex 1.5: Assess the free Capacity of a running instance and Change its instance Type 
+	1. With an instance running, open the Instances Dashboard. Select the instance you’re interested in and click the Monitoring tab in the bottom half of the screen. That’s a good place to see what percentage of compute and network resources you’ve been using over the past hours or weeks. 
+	Now pretend that your instance is nearly maxed out and change the instance type as follows. 
+	2. Stop the instance. (Remember, your public IP address might be different when you start up again.) 
+	3. From the Actions drop-down, click Instance Settings and then Change Instance Type. Select a new type. 
+	4. Restart the instance and confirm that it’s running properly. 
+
+Ex 1.6: Create and launch an Ami Based on an Existing instance  
+	1. If necessary, launch an instance and make at least some token change to the root volume. This could be something as simple as typing touch test.txt on a Linux instance to create an empty file. 
+	2. Create an image from the instance’s volume (you’ll access the dialog through the 
+Actions pull-down menu in the Instances Dashboard). 
+	3. Launch an instance from the console and select the new AMI from the My AMIs tab. 
+	4. Log into the instance and confirm that your previous change has persisted. 
+
+
+Ex 1.7: Create Ec2 instance with CLI command
+
+AWS CLI Example (EC2 Instance)
+
+https://gist.github.com/mahtabgodara/ff87acf9b9b369ff5cedc432d26d94b1
+
+
+
+Ex 1.8: Clean up unused EC2 resources 
+
+Since you’ve probably been launching resources while experimenting with AWS, you’ll want to make sure you haven’t accidentally left anything running that could cost you money. So, take a good look through the console and kill off what shouldn’t still be alive. Here are some things to consider: 
+
+	1. Remember to check any other AWS regions where you might have done some work— only a single region’s resources will show up in the console. 
+	2. Some resources can’t be deleted because they’re in use by other resources. A snap- shot used by a private AMI is one example. You’ll need to shut those down in the right order. 
+	3. When you’re logged into your AWS account, you can check out your Billing And Cost Management Dashboard in the console (https://console.aws.amazon.com/ billing). This Dashboard will show you whether, taking into account your current resource usage, you stand to run up a bill in the current month. 
+
+
+EFS (Elastic File System)
+
+https://aws.amazon.com/getting-started/tutorials/create-network-file-system/?trk=gs_card
+
