@@ -1,0 +1,545 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Load and Scale Testing for AWS Technical Essentials v4.1; Lab 1 - Build a VPC and Deploy a Web Server",
+  "Parameters": {
+    "MyLabVPCCIDR": {
+      "Description": "CIDR Block for My Lab VPC",
+      "Type": "String",
+      "Default": "10.0.0.0/16",
+      "AllowedValues": ["10.0.0.0/16"]
+    },
+    "PublicSubnet1CIDR": {
+      "Description": "Public Subnet 1",
+      "Type": "String",
+      "Default": "10.0.1.0/24",
+      "AllowedValues": ["10.0.1.0/24"]
+    },
+    "PublicSubnet2CIDR": {
+      "Description": "Public Subnet 2",
+      "Type": "String",
+      "Default": "10.0.2.0/24",
+      "AllowedValues": ["10.0.2.0/24"]
+    },
+    "PrivateSubnet1CIDR": {
+      "Description": "Private Subnet 1",
+      "Type": "String",
+      "Default": "10.0.3.0/24",
+      "AllowedValues": ["10.0.3.0/24"]
+    },
+    "PrivateSubnet2CIDR": {
+      "Description": "Private Subnet 2",
+      "Type": "String",
+      "Default": "10.0.4.0/24",
+      "AllowedValues": ["10.0.4.0/24"]
+    },
+    "KeyName": {
+      "Type": "String",
+      "Description": "Keyname for the keypair that Qwiklab will use to launch EC2 instances",
+      "Default": "default-lab-key"
+    },
+    "AdministratorPassword": {
+      "Type": "String",
+      "Description": "Randomly generated password Qwiklab will set which can then be re-used for other resources",
+      "Default": "Default-Admin-Password123"
+    },
+    "AdministratorUser": {
+      "Type": "String",
+      "Description": "The Administrator username which is assoicated with the previous Parameter - AdministratorPassword",
+      "Default": "Default-Admin-User"
+    },
+    "AWSAccessKey": {
+      "Type": "String",
+      "Description": "Automatically created Access Key, associated to the IAM student account, which can then be re-used for other resources",
+      "Default": "Default-IAM-AWSAccessKey"
+    },
+    "AWSSecretAccessKey": {
+      "Type": "String",
+      "Description": "Automatically created SecretAccess Key, associated to the IAM student account, which can then be re-used for other resources",
+      "Default": "Default-IAM-AWSSecretAccessKey"
+    },
+    "QwiklabLocale": {
+      "Default": "en",
+      "Description": "The locale of the student will be passed in to this parameter via the Qwiklab platform (via the student's browser)",
+      "Type": "String"
+    }
+  },
+  "Mappings": {
+    "AmazonLinuxAMI": {
+		"us-east-1" : {
+		  "AMI" : "ami-08111162"
+		},
+		"us-west-1" : {
+		  "AMI" : "ami-1b0f7d7b"
+		},
+		"us-west-2" : {
+		  "AMI" : "ami-f0091d91"
+		},
+		"eu-west-1" : {
+		  "AMI" : "ami-31328842"
+		},
+		"eu-central-1" : {
+		  "AMI" : "ami-e2df388d"
+		},
+		"ap-northeast-1" : {
+		  "AMI" : "ami-f80e0596"
+		},
+		"ap-northeast-2" : {
+		  "AMI" : "ami-6598510b"
+		},
+		"ap-southeast-1" : {
+		  "AMI" : "ami-c9b572aa"
+		},
+		"ap-southeast-2" : {
+		  "AMI" : "ami-f2210191"
+		},
+		"sa-east-1" : {
+		  "AMI" : "ami-1e159872"
+		}
+    }
+  },
+  "Resources": {
+    "MyLabVPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {"Ref": "MyLabVPCCIDR"},
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
+        "Tags": [
+          {
+            "Key": "VPC",
+            "Value": "TechEss 40 Simulation"
+          },
+          {
+            "Key": "Name",
+            "Value": "My Lab VPC"
+          }
+		]
+      }
+    },
+	"myWaitHandle" : {
+		 "Type" : "AWS::CloudFormation::WaitConditionHandle",
+		 "Properties" : {
+		 }
+	},
+	"myWaitCondition01" : {
+		"Type" : "AWS::CloudFormation::WaitCondition",
+		"DependsOn" : "MyLabVPC",
+		"Properties" : {
+			"Handle" : { "Ref" : "myWaitHandle" },
+			 "Timeout" : "60",
+			 "Count" : "0"
+		}
+	},
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "DependsOn": ["MyLabVPC", "myWaitCondition01"],
+	  "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "IGW"
+          }
+        ]
+	  }
+    },
+    "AttachGateway": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "DependsOn": ["MyLabVPC", "InternetGateway"],
+      "Properties": {
+        "VpcId": {"Ref": "MyLabVPC"},
+        "InternetGatewayId": {"Ref": "InternetGateway"}
+      }
+    },
+    "PublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "VpcId": {"Ref": "MyLabVPC"},
+        "CidrBlock": {"Ref": "PublicSubnet1CIDR"},
+		"MapPublicIpOnLaunch" : "true",
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "0",
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Public Subnet 1"
+          }
+        ]
+      }
+    },
+	"myWaitHandle" : {
+		 "Type" : "AWS::CloudFormation::WaitConditionHandle",
+		 "Properties" : {
+		 }
+	},
+	"myWaitCondition02" : {
+		"Type" : "AWS::CloudFormation::WaitCondition",
+		"DependsOn" : "PublicSubnet1",
+		"Properties" : {
+			"Handle" : { "Ref" : "myWaitHandle" },
+			 "Timeout" : "60",
+			 "Count" : "0"
+		}
+	},
+    "PublicSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn": ["AttachGateway", "myWaitCondition02"],
+      "Properties": {
+        "VpcId": {"Ref": "MyLabVPC"},
+        "CidrBlock": {"Ref": "PublicSubnet2CIDR"},
+		"MapPublicIpOnLaunch" : "true",
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "1",
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Public Subnet 2"
+          }
+        ]
+      }
+    },
+    "PublicRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "DependsOn": ["MyLabVPC", "AttachGateway","myWaitCondition02"],
+      "Properties": {
+        "VpcId": {"Ref": "MyLabVPC"},
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PublicRT"
+          }
+        ]
+      }
+    },
+    "PublicRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": ["PublicRouteTable","InternetGateway","myWaitCondition02"],
+      "Properties": {
+        "RouteTableId": {"Ref": "PublicRouteTable"},
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {"Ref": "InternetGateway"}
+      }
+    },
+    "PublicSubnet1RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": ["PublicRouteTable", "PublicSubnet1","myWaitCondition02"],
+      "Properties": {
+        "SubnetId": {"Ref": "PublicSubnet1"},
+        "RouteTableId": {"Ref": "PublicRouteTable"}
+      }
+    },
+    "PublicSubnet2RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": ["PublicRouteTable", "PublicSubnet2","myWaitCondition02"],
+      "Properties": {
+        "SubnetId": {"Ref": "PublicSubnet2"},
+        "RouteTableId": {"Ref": "PublicRouteTable"}
+      }
+    },
+	"NATSecurityGroup" : {
+		"Type" : "AWS::EC2::SecurityGroup",
+		"DependsOn" : ["AttachGateway","myWaitCondition02"],
+		"Properties" : {
+			"GroupDescription" : "Enable internal access to the NAT device",
+			"VpcId" : {
+				"Ref" : "MyLabVPC"
+			},
+			"SecurityGroupIngress" : [{
+					"IpProtocol" : "tcp",
+					"FromPort" : "0",
+					"ToPort" : "1024",
+					"CidrIp" : {
+						"Ref" : "MyLabVPCCIDR"
+					}
+				}, {
+					"IpProtocol" : "udp",
+					"FromPort" : "0",
+					"ToPort" : "1024",
+					"CidrIp" : {
+						"Ref" : "MyLabVPCCIDR"
+					}
+				}
+			],
+			"SecurityGroupEgress" : [{
+					"IpProtocol" : "tcp",
+					"FromPort" : "0",
+					"ToPort" : "65535",
+					"CidrIp" : "0.0.0.0/0"
+				}, {
+					"IpProtocol" : "udp",
+					"FromPort" : "0",
+					"ToPort" : "65535",
+					"CidrIp" : "0.0.0.0/0"
+				}
+			]
+		}
+	},
+	"NATInstance" : {
+		"Type" : "AWS::EC2::Instance",
+		"DependsOn" : ["AttachGateway", "PublicRoute", "PublicSubnet1","myWaitCondition02"],
+		"Properties" : {
+			"ImageId" : {
+				"Fn::FindInMap" : [
+					"AmazonLinuxAMI", {
+						"Ref" : "AWS::Region"
+					},
+					"AMI"
+				]
+			},
+			"KeyName" : {
+				"Ref" : "KeyName"
+			},
+			"InstanceType" : "t2.micro",
+			"NetworkInterfaces" : [{
+					"DeviceIndex" : "0",
+					"AssociatePublicIpAddress" : "true",
+					"SubnetId" : {
+						"Ref" : "PublicSubnet1"
+					},
+					"GroupSet" : [{
+							"Ref" : "NATSecurityGroup"
+						}
+					]
+				}
+			],
+			"SourceDestCheck" : "false",
+			"Tags" : [{
+					"Key" : "Name",
+					"Value" : "NAT"
+				}
+			],
+			"UserData" : {
+				"Fn::Base64" : {
+					"Fn::Join" : [
+						"\n",
+						[
+							"#!/bin/bash",
+							"yum -y update",
+							"echo 1 > /proc/sys/net/ipv4/ip_forward",
+							"echo 0 > /proc/sys/net/ipv4/conf/eth0/send_redirects",
+							"/sbin/iptables -t nat -A POSTROUTING -o eth0 -s 0.0.0.0/0 -j MASQUERADE",
+							"/sbin/iptables-save > /etc/sysconfig/iptables",
+							"mkdir -p /etc/sysctl.d/",
+							"cat <<EOF > /etc/sysctl.d/nat.conf",
+							"net.ipv4.ip_forward = 1",
+							"net.ipv4.conf.eth0.send_redirects = 0",
+							"EOF \n"
+						]
+					]
+				}
+			}
+		}
+	},
+    "PrivateSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn": ["AttachGateway","myWaitCondition02"],
+      "Properties": {
+        "VpcId": {"Ref": "MyLabVPC"},
+        "CidrBlock": {"Ref": "PrivateSubnet1CIDR"},
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "0",
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Private Subnet 1"
+          }
+        ]
+      }
+    },
+    "PrivateSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "DependsOn": ["AttachGateway","myWaitCondition02"],
+      "Properties": {
+        "VpcId": {"Ref": "MyLabVPC"},
+        "CidrBlock": {"Ref": "PrivateSubnet2CIDR"},
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "1",
+            {
+              "Fn::GetAZs": ""
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Private Subnet 2"
+          }
+        ]
+      }
+    },
+    "PrivateRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "DependsOn": ["AttachGateway","myWaitCondition02"],
+      "Properties": {
+        "VpcId": {"Ref": "MyLabVPC"},
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateRT"
+          }
+        ]
+      }
+    },
+    "PrivateSubnet1RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": ["PrivateRouteTable", "PrivateSubnet1"],
+      "Properties": {
+        "SubnetId": {"Ref": "PrivateSubnet1"},
+        "RouteTableId": {"Ref": "PrivateRouteTable"}
+      }
+    },
+    "PrivateSubnet2RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "DependsOn": ["PrivateRouteTable", "PrivateSubnet2"],
+      "Properties": {
+        "SubnetId": {"Ref": "PrivateSubnet2"},
+        "RouteTableId": {"Ref": "PrivateRouteTable"}
+      }
+    },
+    "PrivateRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": ["NATInstance", "PrivateRouteTable"],
+      "Properties": {
+        "RouteTableId": {"Ref": "PrivateRouteTable"},
+        "DestinationCidrBlock": "0.0.0.0/0",
+		"InstanceId" : {"Ref": "NATInstance" }
+      }
+    },
+	"myWaitHandle" : {
+		 "Type" : "AWS::CloudFormation::WaitConditionHandle",
+		 "Properties" : {
+		 }
+	},
+	"myWaitCondition03" : {
+		"Type" : "AWS::CloudFormation::WaitCondition",
+		"DependsOn" : "PrivateRoute",
+		"Properties" : {
+			"Handle" : { "Ref" : "myWaitHandle" },
+			 "Timeout" : "60",
+			 "Count" : "0"
+		}
+	},
+    "WebSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "DependsOn": ["AttachGateway","myWaitCondition03"],
+      "Properties" : {
+         "GroupDescription" : "Enable HTTP Access",
+         "VpcId" : {"Ref": "MyLabVPC"},
+         "Tags": [
+                {
+                  "Key": "Name",
+                  "Value": "WebSecurityGroup"
+                }
+              ],
+		"SecurityGroupIngress": [
+		   {
+				"IpProtocol": "tcp",
+				"FromPort": "22",
+				"ToPort": "22",
+				"CidrIp": "0.0.0.0/0"
+			},
+		   {
+				"IpProtocol": "tcp",
+				"FromPort": "80",
+				"ToPort": "80",
+				"CidrIp": "0.0.0.0/0"
+			}
+		]
+		}
+        },
+	"myWaitHandle" : {
+		 "Type" : "AWS::CloudFormation::WaitConditionHandle",
+		 "Properties" : {
+		 }
+	},
+	"myWaitCondition04" : {
+		"Type" : "AWS::CloudFormation::WaitCondition",
+		"DependsOn" : "WebSecurityGroup",
+		"Properties" : {
+			"Handle" : { "Ref" : "myWaitHandle" },
+			 "Timeout" : "120",
+			 "Count" : "0"
+		}
+	},
+	"WebServer": {
+        "Type": "AWS::EC2::Instance",
+		"DependsOn": ["NATInstance","myWaitCondition04"],
+        "Properties": {
+                "KeyName": {"Ref": "KeyName"},
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "AmazonLinuxAMI",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "AMI"
+                    ]
+                },
+                "InstanceType": "t2.micro",
+                "NetworkInterfaces": [
+                    {
+                        "DeviceIndex": "0",
+                        "AssociatePublicIpAddress": "true",
+                        "SubnetId": { "Ref": "PublicSubnet2" },
+                        "GroupSet": [{ "Ref": "WebSecurityGroup" }]
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Web Server 1"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+								"#!/bin/bash -ex \n",
+								"yum -y update \n",
+								"yum -y install httpd php mysql php-mysql \n",
+								"chkconfig httpd on \n",
+								"/etc/init.d/httpd start \n",
+								"if [ ! -f /var/www/html/lab2-app.tar.gz ]; then \n",
+								"cd /var/www/html \n",
+								"wget https://us-west-2-aws-training.s3.amazonaws.com/awsu-ilt/AWS-100-ESS/v4.0/lab-2-configure-website-datastore/scripts/lab2-app.tar.gz  \n",
+								"tar xvfz lab2-app.tar.gz \n",
+								"chown apache:root /var/www/html/lab2-app/rds.conf.php \n",
+								"fi \n"
+                            ]
+                        ]
+                    }
+                }
+        }
+    }
+},
+  "Outputs": {
+		"WebServer" : {
+			"Value" : {"Fn::GetAtt" : [ "WebServer", "PublicIp" ] },
+			"Description" : "Public IP address of the Web Server"
+		},
+		"Region" : {
+			"Value" : {"Ref": "AWS::Region"},
+			"Description" : "Region used for the lab"
+		}
+  }
+}
