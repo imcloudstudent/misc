@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1471887742809",
+      "Action": ["cloudformation:*",
+                 "dynamodb:*",
+                 "ec2:*",
+                 "iam:*",
+                 "s3:*",
+                 "sns:*",
+                 "cloudwatch:*"],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}

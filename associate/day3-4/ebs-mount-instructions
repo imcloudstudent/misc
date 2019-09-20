@@ -1,0 +1,20 @@
+lsblk
+sudo file -s /dev/xvdf
+sudo mkfs -t xfs /dev/xvdf
+	sudo yum install xfsprogs (Optional, required only if previous command does not work)
+sudo mkdir /data1
+sudo mount /dev/xvdf /data1
+
+
+
+Optional(only if you want volume to stay on reboot)
+sudo cp /etc/fstab /etc/fstab.orig
+sudo blkid
+sudo lsblk -o +UUID
+sudo vim /etc/fstab
+UUID=<<UUID>>  /data  xfs  defaults,nofail  0  2
+sudo umount /data
+sudo mount -a
+
+
+
