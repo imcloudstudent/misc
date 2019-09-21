@@ -14,7 +14,7 @@ To Setup LAMP
 
 #!/bin/bash
 yum update -y
-yum install -y httpd php mysql-server php-mysqlnd
+yum install -y httpd php mysql-server php-mysqld
 service httpd start
 chkconfig httpd on
 groupadd www
