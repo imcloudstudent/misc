@@ -1,0 +1,11 @@
+https://getcomposer.org/download/ (4 commands of composer)
+
+php -d memory_limit=-1 composer.phar require aws/aws-sdk-php
+
+https://getcomposer.org/doc/articles/troubleshooting.md#proc-open-fork-failed-errors
+
+# If you are experiencing memory issues with your t2.micro when trying to install the AWS SDK, please run the following commands and try again:
+
+/bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024
+/sbin/mkswap /var/swap.1
+/sbin/swapon /var/swap.1

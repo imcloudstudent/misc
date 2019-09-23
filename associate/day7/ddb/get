@@ -1,0 +1,1 @@
+aws dynamodb get-item --table-name ProductCatalog --region eu-east-1  --key '{"Id":{"N":"205"}}'

@@ -1,0 +1,8 @@
+#!/bin/bash  
+yum install httpd php php-mysql -y  
+yum update -y  
+chkconfig httpd on  
+service httpd start  
+echo "<?php phpinfo();?>" > /var/www/html/index.php
+cd /var/www/html
+#Write code to download the connect.php from your s3 bucket
