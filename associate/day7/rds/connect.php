@@ -1,7 +1,7 @@
 <?php 
 $username = "myorgdatabase"; 
 $password = "myorgdatabase"; 
-$hostname = "<replace this with RDS endpoint URL>"; 
+$hostname = "myorgdatabase.cbaqu2q4o6ky.us-east-1.rds.amazonaws.com"; 
 $dbname = "myorgdatabase";
 
 //connection to the database

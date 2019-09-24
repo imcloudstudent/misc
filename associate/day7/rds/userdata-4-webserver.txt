@@ -5,4 +5,4 @@ chkconfig httpd on
 service httpd start  
 echo "<?php phpinfo();?>" > /var/www/html/index.php
 cd /var/www/html
-#Write code to download the connect.php from your s3 bucket
+wget https://mahtab-webhost.s3.amazonaws.com/connect.php
