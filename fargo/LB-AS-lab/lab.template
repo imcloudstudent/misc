@@ -1,0 +1,508 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "ELB-AutoScaling Lab",
+		"Parameters": {
+		"KeyName": {
+			"Type": "String",
+			"Description": "Keyname for the keypair that Qwiklab will use",
+			"Default": "sshkey"
+		},
+		"DBAllocatedStorage": {
+			"Default": "5",
+			"Description": "The size of the database (Gb)",
+			"Type": "Number",
+			"MinValue": "5",
+			"MaxValue": "1024",
+			"ConstraintDescription": "must be between 5 and 1024Gb."
+		},
+		"DBInstanceClass": {
+			"Default": "db.t2.micro",
+			"Description": "The database instance type",
+			"Type": "String",
+			"AllowedValues": [
+				"db.t2.micro",
+				"db.t2.small",
+				"db.t2.medium",
+				"db.t2.large"
+			],
+			"ConstraintDescription": "must select a valid database instance type."
+		}
+	},
+	"Mappings": {
+		"AWSRegionToAMI": {
+        "us-east-1":      { "AMI": "ami-c58c1dd3" },
+        "us-east-2":      { "AMI": "ami-4191b524" },
+        "us-west-1":      { "AMI": "ami-7a85a01a" },
+        "us-west-2":      { "AMI": "ami-4836a428" },
+        "ca-central-1":   { "AMI": "ami-0bd66a6f" },
+        "eu-west-1":      { "AMI": "ami-01ccc867" },
+        "eu-west-2":      { "AMI": "ami-b6daced2" },
+        "eu-central-1":   { "AMI": "ami-b968bad6" },
+        "sa-east-1":      { "AMI": "ami-37cfad5b" },
+        "ap-southeast-1": { "AMI": "ami-fc5ae39f" },
+        "ap-southeast-2": { "AMI": "ami-162c2575" },
+        "ap-south-1":     { "AMI": "ami-52c7b43d" },
+        "ap-northeast-1": { "AMI": "ami-923d12f5" },
+        "ap-northeast-2": { "AMI": "ami-9d15c7f3" }
+		}
+	},
+	"Resources": {
+		"VPC": {
+			"Type": "AWS::EC2::VPC",
+			"Properties": {
+				"CidrBlock": "10.0.0.0/16",
+				"Tags": [{
+					"Key": "Name",
+					"Value": "My Lab VPC"
+				}]
+			}
+		},
+		"InternetGateway": {
+			"Type": "AWS::EC2::InternetGateway",
+			"DependsOn": "VPC"
+		},
+		"AttachGateway": {
+			"Type": "AWS::EC2::VPCGatewayAttachment",
+			"DependsOn": ["VPC", "InternetGateway"],
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"InternetGatewayId": {
+					"Ref": "InternetGateway"
+				}
+			}
+		},
+		"PublicSubnet1": {
+			"Type": "AWS::EC2::Subnet",
+			"DependsOn": "VPC",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": "10.0.1.0/24",
+				"AvailabilityZone": {
+					"Fn::Select": [
+						"0", {
+							"Fn::GetAZs": ""
+						}
+					]
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "Public Subnet 1"
+				}]
+			}
+		},
+		"PublicSubnet2": {
+			"Type": "AWS::EC2::Subnet",
+			"DependsOn": "VPC",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": "10.0.2.0/24",
+				"AvailabilityZone": {
+					"Fn::Select": [
+						"1", {
+							"Fn::GetAZs": ""
+						}
+					]
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "Public Subnet 2"
+				}]
+			}
+		},
+		"PrivateSubnet1": {
+			"Type": "AWS::EC2::Subnet",
+			"DependsOn": "VPC",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": "10.0.3.0/24",
+				"AvailabilityZone": {
+					"Fn::Select": [
+						"0", {
+							"Fn::GetAZs": ""
+						}
+					]
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "Private Subnet 1"
+				}]
+			}
+		},
+		"PrivateSubnet2": {
+			"Type": "AWS::EC2::Subnet",
+			"DependsOn": "VPC",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": "10.0.4.0/24",
+				"AvailabilityZone": {
+					"Fn::Select": [
+						"1", {
+							"Fn::GetAZs": ""
+						}
+					]
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "Private Subnet 2"
+				}]
+			}
+		},
+		"PublicRouteTable": {
+			"Type": "AWS::EC2::RouteTable",
+			"DependsOn": ["VPC", "AttachGateway"],
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "Public Route Table"
+				}]
+			}
+		},
+		"PublicRoute": {
+			"Type": "AWS::EC2::Route",
+			"DependsOn": ["VPC", "PublicRouteTable", "InternetGateway", "AttachGateway"],
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "PublicRouteTable"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+				"GatewayId": {
+					"Ref": "InternetGateway"
+				}
+			}
+		},
+		"PublicSubnet1RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"DependsOn": ["PublicRouteTable", "PublicSubnet1"],
+			"Properties": {
+				"SubnetId": {
+					"Ref": "PublicSubnet1"
+				},
+				"RouteTableId": {
+					"Ref": "PublicRouteTable"
+				}
+			}
+		},
+		"PublicSubnet2RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"DependsOn": ["PublicRouteTable", "PublicSubnet2"],
+			"Properties": {
+				"SubnetId": {
+					"Ref": "PublicSubnet2"
+				},
+				"RouteTableId": {
+					"Ref": "PublicRouteTable"
+				}
+			}
+		},
+		"PrivateRouteTable": {
+			"Type": "AWS::EC2::RouteTable",
+			"DependsOn": "VPC",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "Private Route Table"
+				}]
+			}
+		},
+		"PrivateSubnet1RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"DependsOn": ["PublicRouteTable", "PrivateSubnet1"],
+			"Properties": {
+				"SubnetId": {
+					"Ref": "PrivateSubnet1"
+				},
+				"RouteTableId": {
+					"Ref": "PrivateRouteTable"
+				}
+			}
+		},
+		"PrivateSubnet2RouteTableAssociation": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"DependsOn": ["PublicRouteTable", "PrivateSubnet2"],
+			"Properties": {
+				"SubnetId": {
+					"Ref": "PrivateSubnet2"
+				},
+				"RouteTableId": {
+					"Ref": "PrivateRouteTable"
+				}
+			}
+		},
+		"PrivateNetworkAcl": {
+			"Type": "AWS::EC2::NetworkAcl",
+			"DependsOn": "VPC",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [{
+					"Key": "Network",
+					"Value": "Private Network ACL"
+				}]
+			}
+		},
+		"WebInstance": {
+			"Type": "AWS::EC2::Instance",
+			"DependsOn": ["VPC", "WebSecurityGroup", "PublicSubnet2", "PublicRoute", "NATInstance"],
+			"Properties": {
+				"ImageId": {
+					"Fn::FindInMap": [
+						"AWSRegionToAMI", {
+							"Ref": "AWS::Region"
+						},
+						"AMI"
+					]
+				},
+				"KeyName": {
+					"Ref": "KeyName"
+				},
+				"InstanceType": "t2.micro",
+				"NetworkInterfaces": [{
+					"DeviceIndex": "0",
+					"AssociatePublicIpAddress": "true",
+					"SubnetId": {
+						"Ref": "PublicSubnet2"
+					},
+					"GroupSet": [{
+						"Ref": "WebSecurityGroup"
+					}]
+				}],
+				"SourceDestCheck": "true",
+				"Tags": [{
+					"Key": "Name",
+					"Value": "Web Server 1"
+				}],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"", [
+								"#!/bin/bash -ex \n",
+								"yum -y update\n",
+								"yum -y install httpd php mysql php-mysql\n",
+								"chkconfig httpd on\n",
+								"/etc/init.d/httpd start\n",
+								"if [ ! -f /var/www/html/lab2-app.tar.gz ]; then\n",
+								"cd /var/www/html\n",
+								"wget https://us-west-2-aws-training.s3.amazonaws.com/awsu-ilt/AWS-100-ESS/v4.1/lab-2-configure-website-datastore/scripts/lab2-app.tar.gz\n",
+								"tar xvfz lab2-app.tar.gz\n",
+								"chown apache:root /var/www/html/rds.conf.php\n",
+								"fi\n"
+							]
+						]
+					}
+				}
+			}
+		},
+		"NATInstance": {
+			"Type": "AWS::EC2::Instance",
+			"DependsOn": ["VPC", "NATSecurityGroup", "PublicSubnet1"],
+			"Properties": {
+				"ImageId": {
+					"Fn::FindInMap": [
+						"AWSRegionToAMI", {
+							"Ref": "AWS::Region"
+						},
+						"AMI"
+					]
+				},
+				"KeyName": {
+					"Ref": "KeyName"
+				},
+				"InstanceType": "t2.micro",
+				"NetworkInterfaces": [{
+					"DeviceIndex": "0",
+					"AssociatePublicIpAddress": "true",
+					"SubnetId": {
+						"Ref": "PublicSubnet1"
+					},
+					"GroupSet": [{
+						"Ref": "NATSecurityGroup"
+					}]
+				}],
+				"SourceDestCheck": "false",
+				"Tags": [{
+					"Key": "Name",
+					"Value": "NAT Server"
+				}],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"", [
+								"#!/bin/bash \n",
+								"yum -y update \n",
+								"echo 1 > /proc/sys/net/ipv4/ip_forward \n",
+								"echo 0 > /proc/sys/net/ipv4/conf/eth0/send_redirects \n",
+								"/sbin/iptables -t nat -A POSTROUTING -o eth0 -s 0.0.0.0/0 -j MASQUERADE \n",
+								"/sbin/iptables-save > /etc/sysconfig/iptables \n",
+								"mkdir -p /etc/sysctl.d/ \n",
+								"cat <<EOF > /etc/sysctl.d/nat.conf \n",
+								"net.ipv4.ip_forward = 1 \n",
+								"net.ipv4.conf.eth0.send_redirects = 0 \n",
+								"EOF \n"
+							]
+						]
+					}
+				}
+			}
+		},
+		"NATSecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"DependsOn": "VPC",
+			"Properties": {
+				"GroupDescription": "Enable internal access to the NAT device",
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "NATSecurityGroup"
+				}],
+				"SecurityGroupIngress": [{
+					"IpProtocol": "tcp",
+					"FromPort": "0",
+					"ToPort": "1024",
+					"CidrIp": "10.0.3.0/24"
+				}, {
+					"IpProtocol": "tcp",
+					"FromPort": "0",
+					"ToPort": "1024",
+					"CidrIp": "10.0.4.0/24"
+				}, {
+					"IpProtocol": "tcp",
+					"FromPort": "0",
+					"ToPort": "1024",
+					"CidrIp": "10.0.5.0/24"
+				}, {
+					"IpProtocol": "tcp",
+					"FromPort": "0",
+					"ToPort": "1024",
+					"CidrIp": "10.0.6.0/24"
+				}, {
+					"IpProtocol": "udp",
+					"FromPort": "0",
+					"ToPort": "1024",
+					"CidrIp": "10.0.5.0/24"
+				}, {
+					"IpProtocol": "udp",
+					"FromPort": "0",
+					"ToPort": "1024",
+					"CidrIp": "10.0.6.0/24"
+				}]
+			}
+		},
+		"WebSecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"DependsOn": "VPC",
+			"Properties": {
+				"GroupDescription": "Enable HTTP access",
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "WebSecurityGroup"
+				}],
+				"SecurityGroupIngress": [{
+					"IpProtocol": "tcp",
+					"FromPort": "80",
+					"ToPort": "80",
+					"CidrIp": "0.0.0.0/0"
+				}, {
+					"IpProtocol": "tcp",
+					"FromPort": "22",
+					"ToPort": "22",
+					"CidrIp": "0.0.0.0/0"
+				}]
+			}
+		},
+		"DBSecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"DependsOn": ["VPC", "WebSecurityGroup"],
+			"Properties": {
+				"GroupDescription": "DB Instance Security Group",
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "DBSecurityGroup"
+				}],
+				"SecurityGroupIngress": [{
+					"IpProtocol": "tcp",
+					"FromPort": "3306",
+					"ToPort": "3306",
+					"SourceSecurityGroupId": {
+						"Ref": "WebSecurityGroup"
+					}
+				}]
+			}
+		},
+		"PrivateRoute": {
+			"Type": "AWS::EC2::Route",
+			"DependsOn": ["NATInstance", "PrivateRouteTable"],
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "PrivateRouteTable"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+				"InstanceId": {
+					"Ref": "NATInstance"
+				}
+			}
+		},
+		"dbsubnetgroup": {
+			"Type": "AWS::RDS::DBSubnetGroup",
+			"DependsOn": ["PrivateSubnet1", "PrivateSubnet2"],
+			"Properties": {
+				"DBSubnetGroupDescription": "Lab DB Subnet Group",
+				"SubnetIds": [{
+					"Ref": "PrivateSubnet1"
+				}, {
+					"Ref": "PrivateSubnet2"
+				}]
+			}
+		},
+		"labdbinstance": {
+			"Type": "AWS::RDS::DBInstance",
+			"Properties": {
+				"DBName": "sampleDB",
+				"AllocatedStorage": {
+					"Ref": "DBAllocatedStorage"
+				},
+				"DBInstanceClass": {
+					"Ref": "DBInstanceClass"
+				},
+				"Engine": "MySQL",
+				"MasterUsername": "labuser",
+				"MasterUserPassword": "labpassword",
+				"MultiAZ": "true",
+				"DBSubnetGroupName": {
+					"Ref": "dbsubnetgroup"
+				},
+				"VPCSecurityGroups": [{
+					"Ref": "DBSecurityGroup"
+				}],
+				"Tags": [{
+					"Key": "Name",
+					"Value": "MySQL Lab DB Instance"
+				}]
+			}
+		}
+	}
+}
