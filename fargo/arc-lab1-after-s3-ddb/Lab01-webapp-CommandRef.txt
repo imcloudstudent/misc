@@ -1,52 +1,4 @@
 #!/bin/bash
-yum remove -y httpd php
-yum install -y httpd24 php56
-chkconfig httpd on
-wget https://d2lrzjb0vjvpn5.cloudfront.net/AWS-100-ARC/v5.0/lab-1-webapp/scripts/lab1src.zip 
-unzip lab1src.zip -d /home/ec2-user/
-mv /home/ec2-user/lab1src/index.php /var/www/html/index.php
-mv /home/ec2-user/lab1src/challenge-me.php /var/www/html/challenge-me.php
-wget https://github.com/aws/aws-sdk-php/releases/download/3.15.9/aws.zip
-unzip aws -d /var/www/html
-service httpd start
-
-
-Task 3.4: Offload Static Content to S3
-
-==================================================================================================================
-
-Step 3.4.2:
-aws s3 ls <bucket_name> --region <region>
-
-Step 3.4.3:
-cd /home/ec2-user/lab1src
-
-Step 3.4.4:
-aws s3 cp /home/ec2-user/lab1src/jquery/ s3://<bucket_name>/jquery/ --recursive --acl public-read --region <region>
-
-Step 3.4.5:
-aws s3 cp /home/ec2-user/lab1src/images/ s3://<bucket_name>/images/ --recursive --acl public-read --region <region>
-
-Step 3.4.6:
-aws s3 ls s3://<bucket_name>/ --region <region> --recursive
-
-Step 3.4.7:
-sudo sed -i '2s/%region%/<region>/g' /var/www/html/*.php
-
-sudo sed -i '3s/%bucket%/<bucket_name>/g' /var/www/html/*.php
-
-Step 3.4.16:
-aws dynamodb batch-write-item --request-items file:///home/ec2-user/lab1src/scripts/services1.json --region <region>
-
-aws dynamodb batch-write-item --request-items file:///home/ec2-user/lab1src/scripts/services2.json --region <region>
-
-aws dynamodb batch-write-item --request-items file:///home/ec2-user/lab1src/scripts/services3.json --region <region>
-
-Step 3.4.17 (optional):
-aws dynamodb scan --table-name AWS-Services --region <region>
-
-
-#!/bin/bash
 # Install Apache Web Server and PHP
 yum remove -y httpd php
 yum install -y httpd24 php56
@@ -75,6 +27,3 @@ aws dynamodb batch-write-item --request-items file:///tmp/lab1src/scripts/servic
 # Turn on web server
 chkconfig httpd on
 service httpd start
-
-
-
