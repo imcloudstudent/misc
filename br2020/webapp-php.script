@@ -1,0 +1,7 @@
+#!/bin/bash 
+yum -y update 
+yum -y install httpd php 
+chkconfig httpd on 
+wget https://us-west-2-aws-training.s3.amazonaws.com/awsu-ilt/architecting/v4.0/lab-3-working-with-ec2/static/phpapp.zip 
+unzip phpapp.zip -d /var/www/html/
+sudo service httpd start
