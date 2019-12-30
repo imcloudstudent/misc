@@ -493,7 +493,7 @@
 				"Engine": "MySQL",
 				"MasterUsername": "labuser",
 				"MasterUserPassword": "labpassword",
-				"MultiAZ": "true",
+				"MultiAZ": "false",
 				"DBSubnetGroupName": {
 					"Ref": "dbsubnetgroup"
 				},
